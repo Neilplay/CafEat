@@ -37,10 +37,8 @@ class SignUpPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 50,
-                  backgroundImage: const AssetImage(
-                    'assets/cafeatLOGO.png',
-                  ),
+                  radius: 100,
+                  backgroundImage: const AssetImage('assets/cafeatLOGO.png'),
                   backgroundColor: Color(0xFF000033),
                 ),
                 const SizedBox(height: 20),
@@ -54,8 +52,6 @@ class SignUpPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 SignUpForm(),
-                const SizedBox(height: 20),
-                // Removed the redundant button
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -87,7 +83,6 @@ class SignUpPage extends StatelessWidget {
   }
 }
 
-
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
 
@@ -101,6 +96,8 @@ class _SignUpFormState extends State<SignUpForm> {
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordHidden = true;
   bool _isConfirmPasswordHidden = true;
+
+  String _userType = 'Customer'; // Default value
 
   @override
   void dispose() {
@@ -128,81 +125,62 @@ class _SignUpFormState extends State<SignUpForm> {
             inputType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 20),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: _isPasswordHidden,
-            style: TextStyle(color: Colors.yellow[500]!),
+          buildTextField(
+            icon: Icons.phone,
+            labelText: 'CONTACT NUMBER',
+            hintText: 'Contact Number',
+            inputType: TextInputType.phone,
+          ),
+          const SizedBox(height: 20),
+          buildTextField(
+            icon: Icons.location_city,
+            labelText: 'BUILDING #',
+            hintText: 'Building #',
+          ),
+          const SizedBox(height: 20),
+          buildTextField(
+            icon: Icons.layers,
+            labelText: 'FLOOR',
+            hintText: 'Floor',
+          ),
+          const SizedBox(height: 20),
+          buildTextField(
+            icon: Icons.room,
+            labelText: 'ROOM #',
+            hintText: 'Room #',
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            value: _userType,
+            items: ['Customer', 'Courier'].map((String category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(
+                  category,
+                  style: TextStyle(color: Colors.yellow[500]!),
+                ),
+              );
+            }).toList(),
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-              labelText: 'PASSWORD',
+              labelText: 'USER TYPE',
               labelStyle: TextStyle(color: Colors.yellow[500]!),
-              hintText: 'Password',
-              hintStyle: TextStyle(color: Colors.yellow[500]!),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.yellow[500]!),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.yellow[500]!),
               ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.yellow[500]!,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordHidden = !_isPasswordHidden;
-                  });
-                },
-              ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a password';
-              }
-              return null;
+            onChanged: (value) {
+              setState(() {
+                _userType = value!;
+              });
             },
           ),
           const SizedBox(height: 20),
-          TextFormField(
-            controller: _confirmPasswordController,
-            obscureText: _isConfirmPasswordHidden,
-            style: TextStyle(color: Colors.yellow[500]!),
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-              labelText: 'CONFIRM PASSWORD',
-              labelStyle: TextStyle(color: Colors.yellow[500]!),
-              hintText: 'Confirm Password',
-              hintStyle: TextStyle(color: Colors.yellow[500]!),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.yellow[500]!),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.yellow[500]!),
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isConfirmPasswordHidden
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Colors.yellow[500]!,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isConfirmPasswordHidden = !_isConfirmPasswordHidden;
-                  });
-                },
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
-              } else if (value != _passwordController.text) {
-                return 'Passwords do not match';
-              }
-              return null;
-            },
-          ),
+          buildPasswordField(),
+          const SizedBox(height: 20),
+          buildConfirmPasswordField(),
           const SizedBox(height: 30),
           ElevatedButton(
             onPressed: () {
@@ -262,6 +240,84 @@ class _SignUpFormState extends State<SignUpForm> {
       },
     );
   }
+
+  Widget buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: _isPasswordHidden,
+      style: TextStyle(color: Colors.yellow[500]!),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+        labelText: 'PASSWORD',
+        labelStyle: TextStyle(color: Colors.yellow[500]!),
+        hintText: 'Password',
+        hintStyle: TextStyle(color: Colors.yellow[500]!),
+               enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+            color: Colors.yellow[500]!,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordHidden = !_isPasswordHidden;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a password';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget buildConfirmPasswordField() {
+    return TextFormField(
+      controller: _confirmPasswordController,
+      obscureText: _isConfirmPasswordHidden,
+      style: TextStyle(color: Colors.yellow[500]!),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+        labelText: 'CONFIRM PASSWORD',
+        labelStyle: TextStyle(color: Colors.yellow[500]!),
+        hintText: 'Confirm Password',
+        hintStyle: TextStyle(color: Colors.yellow[500]!),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isConfirmPasswordHidden ? Icons.visibility : Icons.visibility_off,
+            color: Colors.yellow[500]!,
+          ),
+          onPressed: () {
+            setState(() {
+              _isConfirmPasswordHidden = !_isConfirmPasswordHidden;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please confirm your password';
+        } else if (value != _passwordController.text) {
+          return 'Passwords do not match';
+        }
+        return null;
+      },
+    );
+  }
 }
 
 class SignInPage extends StatelessWidget {
@@ -279,11 +335,9 @@ class SignInPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 50,
-                  backgroundImage: const AssetImage(
-                    'assets/cafeatLOGO.png',
-                  ),
-                  backgroundColor: Color(0xFF000033),
+                  radius: 100,
+                  backgroundImage: const AssetImage('assets/cafeatLOGO.png'),
+                  backgroundColor: const Color(0xFF000033),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -296,8 +350,6 @@ class SignInPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 SignInForm(),
-                const SizedBox(height: 20),
-                // Removed the redundant button
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -345,11 +397,11 @@ class SignInForm extends StatelessWidget {
           inputType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
-        buildPasswordField(),
+        buildPasswordField(context),
         const SizedBox(height: 30),
         ElevatedButton(
           onPressed: () {
-            // Handle sign in logic
+            // Handle sign-in logic
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.yellow[500]!,
@@ -367,41 +419,6 @@ class SignInForm extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget buildPasswordField() {
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return TextFormField(
-          obscureText: _isPasswordHidden,
-          style: TextStyle(color: Colors.yellow[500]!),
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-            labelText: 'PASSWORD',
-            labelStyle: TextStyle(color: Colors.yellow[500]!),
-            hintText: 'Password',
-            hintStyle: TextStyle(color: Colors.yellow[500]!),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.yellow[500]!),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.yellow[500]!),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-                color: Colors.yellow[500]!,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordHidden = !_isPasswordHidden;
-                });
-              },
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -435,4 +452,40 @@ class SignInForm extends StatelessWidget {
       },
     );
   }
+
+  Widget buildPasswordField(BuildContext context) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return TextFormField(
+          obscureText: _isPasswordHidden,
+          style: TextStyle(color: Colors.yellow[500]!),
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+            labelText: 'PASSWORD',
+            labelStyle: TextStyle(color: Colors.yellow[500]!),
+            hintText: 'Password',
+            hintStyle: TextStyle(color: Colors.yellow[500]!),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.yellow[500]!),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.yellow[500]!),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+                color: Colors.yellow[500]!,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordHidden = !_isPasswordHidden;
+                });
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+

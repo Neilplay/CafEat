@@ -16,7 +16,6 @@ class LandingPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Replace with your actual logo image asset
               Image.asset(
                 'assets/cafeatLOGO.png',
                 height: 200,

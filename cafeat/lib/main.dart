@@ -1,8 +1,10 @@
+import 'dart:convert'; // For json encoding
 import 'package:flutter/material.dart';
-import 'landing.dart'; // Import the new landing page file
+import 'package:http/http.dart' as http;
+import 'landing.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -14,9 +16,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => LandingPage(), // The first screen (LandingPage)
-        '/signin': (context) => SignInPage(), // Signin page
-        '/auth': (context) => SignUpPage(), // Signup page
+        '/': (context) => const LandingPage(), // The first screen (LandingPage)
+        '/signin': (context) => const SignInPage(), // Signin page
+        '/auth': (context) => const SignUpPage(), // Signup page
       },
     );
   }
@@ -36,11 +38,9 @@ class SignUpPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: const AssetImage(
-                    'assets/cafeatLOGO.png',
-                  ),
+                const CircleAvatar(
+                  radius: 100,
+                  backgroundImage: AssetImage('assets/cafeatLOGO.png'),
                   backgroundColor: Color(0xFF000033),
                 ),
                 const SizedBox(height: 20),
@@ -53,9 +53,7 @@ class SignUpPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                SignUpForm(),
-                const SizedBox(height: 20),
-                // Removed the redundant button
+                const SignUpForm(),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -87,7 +85,6 @@ class SignUpPage extends StatelessWidget {
   }
 }
 
-
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
 
@@ -99,14 +96,57 @@ class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _fullnameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _contactController = TextEditingController();
+
   bool _isPasswordHidden = true;
   bool _isConfirmPasswordHidden = true;
+
+  String _userType = 'Customer'; // Default value
 
   @override
   void dispose() {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _fullnameController.dispose();
+    _emailController.dispose();
+    _contactController.dispose();
     super.dispose();
+  }
+
+  Future<void> signUp() async {
+    if (_formKey.currentState!.validate()) {
+      var url = Uri.parse('http://localhost/cafeat/register.php');
+      var response = await http.post(
+        url,
+        body: {
+          'fullname': _fullnameController.text,
+          'email': _emailController.text,
+          'contact': _contactController.text,
+          'role': _userType,
+          'password': _passwordController.text,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        if (jsonResponse['message'] == 'User registered successfully') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User registered successfully')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to register user')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Error: Unable to connect to the server')),
+        );
+      }
+    }
   }
 
   @override
@@ -116,102 +156,62 @@ class _SignUpFormState extends State<SignUpForm> {
       child: Column(
         children: [
           buildTextField(
+            controller: _fullnameController,
             icon: Icons.person,
             labelText: 'FULL NAME',
             hintText: 'Full Name',
           ),
           const SizedBox(height: 20),
           buildTextField(
+            controller: _emailController,
             icon: Icons.email,
             labelText: 'EMAIL',
             hintText: 'Email',
             inputType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 20),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: _isPasswordHidden,
-            style: TextStyle(color: Colors.yellow[500]!),
+          buildTextField(
+            controller: _contactController,
+            icon: Icons.phone,
+            labelText: 'CONTACT NUMBER',
+            hintText: 'Contact Number',
+            inputType: TextInputType.phone,
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            value: _userType,
+            items: ['Customer', 'Courier'].map((String category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(
+                  category,
+                  style: TextStyle(color: Colors.yellow[500]!),
+                ),
+              );
+            }).toList(),
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-              labelText: 'PASSWORD',
+              labelText: 'USER TYPE',
               labelStyle: TextStyle(color: Colors.yellow[500]!),
-              hintText: 'Password',
-              hintStyle: TextStyle(color: Colors.yellow[500]!),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.yellow[500]!),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.yellow[500]!),
               ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.yellow[500]!,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordHidden = !_isPasswordHidden;
-                  });
-                },
-              ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a password';
-              }
-              return null;
+            onChanged: (value) {
+              setState(() {
+                _userType = value!;
+              });
             },
           ),
           const SizedBox(height: 20),
-          TextFormField(
-            controller: _confirmPasswordController,
-            obscureText: _isConfirmPasswordHidden,
-            style: TextStyle(color: Colors.yellow[500]!),
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-              labelText: 'CONFIRM PASSWORD',
-              labelStyle: TextStyle(color: Colors.yellow[500]!),
-              hintText: 'Confirm Password',
-              hintStyle: TextStyle(color: Colors.yellow[500]!),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.yellow[500]!),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.yellow[500]!),
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isConfirmPasswordHidden
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Colors.yellow[500]!,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isConfirmPasswordHidden = !_isConfirmPasswordHidden;
-                  });
-                },
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
-              } else if (value != _passwordController.text) {
-                return 'Passwords do not match';
-              }
-              return null;
-            },
-          ),
+          buildPasswordField(),
+          const SizedBox(height: 20),
+          buildConfirmPasswordField(),
           const SizedBox(height: 30),
           ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Signing up...')),
-                );
-              }
-            },
+            onPressed: signUp,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.yellow[500]!,
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
@@ -233,12 +233,14 @@ class _SignUpFormState extends State<SignUpForm> {
   }
 
   Widget buildTextField({
+    required TextEditingController controller,
     required IconData icon,
     required String labelText,
     required String hintText,
     TextInputType inputType = TextInputType.text,
   }) {
     return TextFormField(
+      controller: controller,
       keyboardType: inputType,
       style: TextStyle(color: Colors.yellow[500]!),
       decoration: InputDecoration(
@@ -262,6 +264,84 @@ class _SignUpFormState extends State<SignUpForm> {
       },
     );
   }
+
+  Widget buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: _isPasswordHidden,
+      style: TextStyle(color: Colors.yellow[500]!),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+        labelText: 'PASSWORD',
+        labelStyle: TextStyle(color: Colors.yellow[500]!),
+        hintText: 'Password',
+        hintStyle: TextStyle(color: Colors.yellow[500]!),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+            color: Colors.yellow[500]!,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordHidden = !_isPasswordHidden;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a password';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget buildConfirmPasswordField() {
+    return TextFormField(
+      controller: _confirmPasswordController,
+      obscureText: _isConfirmPasswordHidden,
+      style: TextStyle(color: Colors.yellow[500]!),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+        labelText: 'CONFIRM PASSWORD',
+        labelStyle: TextStyle(color: Colors.yellow[500]!),
+        hintText: 'Confirm Password',
+        hintStyle: TextStyle(color: Colors.yellow[500]!),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.yellow[500]!),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isConfirmPasswordHidden ? Icons.visibility : Icons.visibility_off,
+            color: Colors.yellow[500]!,
+          ),
+          onPressed: () {
+            setState(() {
+              _isConfirmPasswordHidden = !_isConfirmPasswordHidden;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please confirm your password';
+        } else if (value != _passwordController.text) {
+          return 'Passwords do not match';
+        }
+        return null;
+      },
+    );
+  }
 }
 
 class SignInPage extends StatelessWidget {
@@ -278,11 +358,9 @@ class SignInPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: const AssetImage(
-                    'assets/cafeatLOGO.png',
-                  ),
+                const CircleAvatar(
+                  radius: 100,
+                  backgroundImage: AssetImage('assets/cafeatLOGO.png'),
                   backgroundColor: Color(0xFF000033),
                 ),
                 const SizedBox(height: 20),
@@ -296,8 +374,6 @@ class SignInPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 SignInForm(),
-                const SizedBox(height: 20),
-                // Removed the redundant button
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -345,11 +421,11 @@ class SignInForm extends StatelessWidget {
           inputType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
-        buildPasswordField(),
+        buildPasswordField(context),
         const SizedBox(height: 30),
         ElevatedButton(
           onPressed: () {
-            // Handle sign in logic
+            // Handle sign-in logic
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.yellow[500]!,
@@ -367,41 +443,6 @@ class SignInForm extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget buildPasswordField() {
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return TextFormField(
-          obscureText: _isPasswordHidden,
-          style: TextStyle(color: Colors.yellow[500]!),
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
-            labelText: 'PASSWORD',
-            labelStyle: TextStyle(color: Colors.yellow[500]!),
-            hintText: 'Password',
-            hintStyle: TextStyle(color: Colors.yellow[500]!),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.yellow[500]!),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.yellow[500]!),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-                color: Colors.yellow[500]!,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordHidden = !_isPasswordHidden;
-                });
-              },
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -432,6 +473,41 @@ class SignInForm extends StatelessWidget {
           return 'Please enter your $labelText';
         }
         return null;
+      },
+    );
+  }
+
+  Widget buildPasswordField(BuildContext context) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return TextFormField(
+          obscureText: _isPasswordHidden,
+          style: TextStyle(color: Colors.yellow[500]!),
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.lock, color: Colors.yellow[500]!),
+            labelText: 'PASSWORD',
+            labelStyle: TextStyle(color: Colors.yellow[500]!),
+            hintText: 'Password',
+            hintStyle: TextStyle(color: Colors.yellow[500]!),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.yellow[500]!),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.yellow[500]!),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+                color: Colors.yellow[500]!,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordHidden = !_isPasswordHidden;
+                });
+              },
+            ),
+          ),
+        );
       },
     );
   }
